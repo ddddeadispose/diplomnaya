@@ -1,33 +1,31 @@
+// src/books/books.service.ts
 import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/mongoose';
+import { Model, Document } from 'mongoose';
+import { Book, BookDocument } from './book.schema';
 
 @Injectable()
 export class BooksService {
-    private books = [];
+    constructor(@InjectModel(Book.name) private readonly bookModel: Model<BookDocument>) {}
 
-    createBook(book: Record<string, any>): Promise<void> {
-        this.books.push(book);
-        return Promise.resolve();
+    async getBooks(): Promise<Book[]> {
+        return this.bookModel.find().exec();
     }
 
-    getBook(id: string): Promise<Record<string, any> | null> {
-        const foundBook = this.books.find(book => book.id === id);
-        return Promise.resolve(foundBook || null);
+    async getBook(id: string): Promise<Book | null> {
+        return this.bookModel.findById(id).exec();
     }
 
-    getBooks(): Promise<Record<string, any>[]> {
-        return Promise.resolve(this.books);
+    async createBook(book: Book): Promise<void> {
+        const createdBook = new this.bookModel(book);
+        await createdBook.save();
     }
 
-    updateBook(id: string, updatedBook: Record<string, any>): Promise<void> {
-        const index = this.books.findIndex(book => book.id === id);
-        if (index !== -1) {
-            this.books[index] = updatedBook;
-        }
-        return Promise.resolve();
+    async updateBook(id: string, updatedBook: Book): Promise<void> {
+        await this.bookModel.findByIdAndUpdate(id, updatedBook).exec();
     }
 
-    deleteBook(id: string): Promise<void> {
-        this.books = this.books.filter(book => book.id !== id);
-        return Promise.resolve();
+    async deleteBook(id: string): Promise<void> {
+        await this.bookModel.findByIdAndDelete(id).exec();
     }
 }
